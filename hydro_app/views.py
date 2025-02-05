@@ -4,6 +4,9 @@ from .serializers import HydroponicSystemSerializer, MeasurementSerializer
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 class StandardResultsPagination(PageNumberPagination):
     page_size = 10
@@ -11,6 +14,8 @@ class StandardResultsPagination(PageNumberPagination):
     max_page_size = 100
 
 class HydroponicSystemViewSet(viewsets.ModelViewSet):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     queryset = HydroponicSystem.objects.all()
     serializer_class = HydroponicSystemSerializer
     permission_classes = [permissions.IsAuthenticated]

@@ -18,8 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/api/hydroponic_systems/', permanent=True)),
     path('admin/', admin.site.urls),
     path('api/', include('hydro_app.urls')),
     path('api-token-auth/', obtain_auth_token),
