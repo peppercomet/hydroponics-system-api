@@ -35,11 +35,15 @@ class HydroponicSystemViewSet(viewsets.ModelViewSet):
 class MeasurementViewSet(viewsets.ModelViewSet):
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['hydroponic_system', 'timestamp']
     ordering_fields = ['ph', 'water_temperature', 'tds', 'timestamp']
     pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        return Measurement.objects.filter(hydroponic_system__owner=user)
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
