@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
-from .models import HydroponicSystem, Measurement
-from .serializers import HydroponicSystemSerializer, MeasurementSerializer
+from .models import HydroponicSystem, Measurement, ParameterHistory
+from .serializers import HydroponicSystemSerializer, MeasurementSerializer, ParameterHistorySerializer, SystemParametersSerializer
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from .serializers import UserSerializer
-
+from rest_framework.decorators import action
 
 class MeasurementFilter(filters.FilterSet):
     min_timestamp = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
@@ -48,6 +48,50 @@ class HydroponicSystemViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def update_parameters(self, request, pk=None):
+        system = self.get_object()
+        serializer = SystemParametersSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Create measurement
+            measurement_data = {
+                'hydroponic_system': system.id,
+                **serializer.validated_data
+            }
+            measurement_serializer = MeasurementSerializer(data=measurement_data)
+            if measurement_serializer.is_valid():
+                measurement_serializer.save()
+
+            # Update parameter history
+            for param, value in serializer.validated_data.items():
+                ParameterHistory.objects.create(
+                    hydroponic_system=system,
+                    parameter_name=param,
+                    value=value
+                )
+
+            return Response(measurement_serializer.data)
+        return Response(serializer.errors, status=400)
+
+    @action(detail=True, methods=['get'])
+    def parameter_history(self, request, pk=None):
+        system = self.get_object()
+        parameters = ['ph', 'water_temperature', 'tds']
+        history = {}
+        
+        for param in parameters:
+            history[param] = ParameterHistory.objects.filter(
+                hydroponic_system=system,
+                parameter_name=param
+            )[:10]
+            
+        serializer = ParameterHistorySerializer(
+            [item for sublist in history.values() for item in sublist], 
+            many=True
+        )
+        return Response(serializer.data)
 
 class MeasurementViewSet(viewsets.ModelViewSet):
     queryset = Measurement.objects.all()

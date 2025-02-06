@@ -20,3 +20,13 @@ class Measurement(models.Model):
 
     def __str__(self):
         return f"Measurement for {self.hydroponic_system.name} at {self.timestamp}"
+
+# Represents parameters history for a hydroponic system
+class ParameterHistory(models.Model):
+    hydroponic_system = models.ForeignKey(HydroponicSystem, on_delete=models.CASCADE, related_name="parameter_history")
+    parameter_name = models.CharField(max_length=50)
+    value = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import HydroponicSystem, Measurement
+from .models import HydroponicSystem, Measurement, ParameterHistory
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,3 +22,13 @@ class MeasurementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Measurement
         fields = ['id', 'hydroponic_system', 'ph', 'water_temperature', 'tds', 'timestamp']
+
+class ParameterHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParameterHistory
+        fields = ['parameter_name', 'value', 'timestamp']
+
+class SystemParametersSerializer(serializers.Serializer):
+    ph = serializers.FloatField(required=False)
+    water_temperature = serializers.FloatField(required=False)
+    tds = serializers.FloatField(required=False)
