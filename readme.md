@@ -78,6 +78,8 @@ You can use superuser's token: a63468b22a73c5183ab8b635e16be014aeda6ce7
 curl -X POST -H "Authorization: Token <your_token>" -d '{"name": "System 1", "location": "Greenhouse A"}' http://127.0.0.1:8000/api/hydroponic_systems/
    ```
 
+Each hydroponic system is assigned to a user (owner) during creation. The user will only have access to their own systems and cannot view or interact with systems owned by other users. This is enforced through the authentication system, where a user must provide a valid token to interact with their systems. All API endpoints related to hydroponic systems will return data specific to the authenticated user.
+
 ### Read All Hydroponic Systems
    ```bash
 curl -H "Authorization: Token <your_token>" http://127.0.0.1:8000/api/hydroponic_systems/
