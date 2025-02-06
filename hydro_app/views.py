@@ -55,24 +55,31 @@ class HydroponicSystemViewSet(viewsets.ModelViewSet):
         serializer = SystemParametersSerializer(data=request.data)
         
         if serializer.is_valid():
-            # Create measurement
             measurement_data = {
                 'hydroponic_system': system.id,
                 **serializer.validated_data
             }
             measurement_serializer = MeasurementSerializer(data=measurement_data)
             if measurement_serializer.is_valid():
+                existing_measurements = Measurement.objects.filter(
+                    hydroponic_system=system
+                ).order_by('-timestamp')
+                
+                if existing_measurements.count() >= 10:
+                    oldest_measurement = existing_measurements.last()
+                    oldest_measurement.delete()
+                
                 measurement_serializer.save()
 
-            # Update parameter history
-            for param, value in serializer.validated_data.items():
-                ParameterHistory.objects.create(
-                    hydroponic_system=system,
-                    parameter_name=param,
-                    value=value
-                )
+                for param, value in serializer.validated_data.items():
+                    ParameterHistory.objects.create(
+                        hydroponic_system=system,
+                        parameter_name=param,
+                        value=value
+                    )
 
-            return Response(measurement_serializer.data)
+                return Response(measurement_serializer.data)
+            return Response(measurement_serializer.errors, status=400)
         return Response(serializer.errors, status=400)
 
     @action(detail=True, methods=['get'])
