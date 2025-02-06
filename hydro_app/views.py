@@ -1,8 +1,9 @@
 from rest_framework import viewsets, permissions
 from .models import HydroponicSystem, Measurement
 from .serializers import HydroponicSystemSerializer, MeasurementSerializer
-from rest_framework.filters import OrderingFilter
+from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
@@ -14,6 +15,20 @@ from rest_framework.permissions import AllowAny
 from .serializers import UserSerializer
 
 
+class MeasurementFilter(filters.FilterSet):
+    min_timestamp = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
+    max_timestamp = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
+    min_ph = filters.NumberFilter(field_name='ph', lookup_expr='gte')
+    max_ph = filters.NumberFilter(field_name='ph', lookup_expr='lte')
+    min_water_temp = filters.NumberFilter(field_name='water_temperature', lookup_expr='gte')
+    max_water_temp = filters.NumberFilter(field_name='water_temperature', lookup_expr='lte')
+    min_tds = filters.NumberFilter(field_name='tds', lookup_expr='gte')
+    max_tds = filters.NumberFilter(field_name='tds', lookup_expr='lte')
+
+    class Meta:
+        model = Measurement
+        fields = ['hydroponic_system']
+
 class StandardResultsPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -24,7 +39,9 @@ class HydroponicSystemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = HydroponicSystem.objects.all()
     serializer_class = HydroponicSystemSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['name', 'location']
+    ordering_fields = ['name', 'location']
 
     def get_queryset(self):
         return self.queryset.filter(owner=self.request.user)
@@ -37,7 +54,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
     serializer_class = MeasurementSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['hydroponic_system', 'timestamp']
+    filterset_class = MeasurementFilter
     ordering_fields = ['ph', 'water_temperature', 'tds', 'timestamp']
     pagination_class = StandardResultsPagination
 
